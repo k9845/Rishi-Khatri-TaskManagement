@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Manager</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/task.css' %}">
+    <script>
+        async function login() {
+            const response = await fetch('/api/token/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value})
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('token', data.access);
+                document.getElementById('tokenStatus').innerText = "Logged in successfully!";
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('taskForms').style.display = 'block';
+                document.getElementById('taskTable').style.display = 'table';
+                fetchTasks();
+            } else {
+                document.getElementById('tokenStatus').innerText = "Login failed.";
+            }
+        }
+
+        async function fetchTasks() {
+            const response = await fetch('/api/tasks/', {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+            });
+            const tasks = await response.json();
+            const taskTable = document.getElementById('taskTableBody');
+            taskTable.innerHTML = '';
+            tasks.forEach(task => {
+                const row = taskTable.insertRow();
+                row.insertCell(0).innerText = task.id;
+                row.insertCell(1).innerText = task.title;
+                row.insertCell(2).innerText = task.description;
+                row.insertCell(3).innerText = task.completed ? 'Yes' : 'No';
+                row.insertCell(4).innerText = new Date(task.created_at).toLocaleString();
+                row.insertCell(5).innerText = new Date(task.updated_at).toLocaleString();
+                const updateCell = row.insertCell(6);
+                const deleteCell = row.insertCell(7);
+
+                updateCell.innerHTML = `<button onclick="showUpdateForm(${task.id}, '${task.title}', '${task.description}', ${task.completed})">Update</button>`;
+                deleteCell.innerHTML = `<button onclick="deleteTask(${task.id})">Delete</button>`;
+            });
+        }
+
+        function showUpdateForm(id, title, description, completed) {
+            document.getElementById('updateId').value = id;
+            document.getElementById('updateTitle').value = title;
+            document.getElementById('updateDescription').value = description;
+            document.getElementById('updateCompleted').checked = completed;
+            document.getElementById('updateForm').style.display = 'block';
+        }
+
+        async function updateTask() {
+            const taskId = document.getElementById('updateId').value;
+            const title = document.getElementById('updateTitle').value;
+            const description = document.getElementById('updateDescription').value;
+            const completed = document.getElementById('updateCompleted').checked;
+            const response = await fetch(`/api/tasks/${taskId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({title: title, description: description, completed: completed})
+            });
+            if (response.ok) {
+                fetchTasks();
+                document.getElementById('updateStatus').innerText = "Task updated successfully!";
+                document.getElementById('updateForm').style.display = 'none';
+            } else {
+                document.getElementById('updateStatus').innerText = "Failed to update task.";
+            }
+        }
+
+        async function deleteTask(id) {
+            const response = await fetch(`/api/tasks/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+            });
+            if (response.ok) {
+                fetchTasks();
+                document.getElementById('deleteStatus').innerText = "Task deleted successfully!";
+            } else {
+                document.getElementById('deleteStatus').innerText = "Failed to delete task.";
+            }
+        }
+
+        async function createTask() {
+            const title = document.getElementById('createTitle').value;
+            const description = document.getElementById('createDescription').value;
+            const response = await fetch('/api/tasks/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({title: title, description: description, completed: false})
+            });
+            if (response.ok) {
+                fetchTasks();
+                document.getElementById('createStatus').innerText = "Task created successfully!";
+            } else {
+                document.getElementById('createStatus').innerText = "Failed to create task.";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Task Manager</h1>
+    <div id="loginForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username">
+        <label for="password">Password:</label>
+        <input type="password" id="password">
+        <button onclick="login()">Login</button>
+        <p id="tokenStatus"></p>
+    </div>
+    <div id="taskForms" style="display:none;">
+        <h2>Create Task</h2>
+        <label for="createTitle">Title:</label>
+        <input type="text" id="createTitle">
+        <label for="createDescription">Description:</label>
+        <input type="text" id="createDescription">
+        <button onclick="createTask()">Create Task</button>
+        <p id="createStatus"></p>
+        <h2>Update Task</h2>
+        <div id="updateForm" style="display:none;">
+            <input type="hidden" id="updateId">
+            <label for="updateTitle">Title:</label>
+            <input type="text" id="updateTitle">
+            <label for="updateDescription">Description:</label>
+            <input type="text" id="updateDescription">
+            <label for="updateCompleted">Completed:</label>
+            <input type="checkbox" id="updateCompleted">
+            <button onclick="updateTask()">Update Task</button>
+            <p id="updateStatus"></p>
+        </div>
+        <p id="deleteStatus"></p>
+    </div>
+    <table id="taskTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Completed</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+                <th>Update</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody id="taskTableBody"></tbody>
+    </table>
+</body>
+</html>

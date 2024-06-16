@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions
+from django.shortcuts import render
 
 from .models import Task
 from .serializers import TaskSerializer
@@ -33,3 +34,7 @@ class TaskRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+def index(request):
+    return render(request, 'index.html')
