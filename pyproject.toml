@@ -13,6 +13,7 @@ django-environ = "*"
 psycopg2-binary = "*"
 python = "^3.10"
 djangorestframework = "*"
+djangorestframework-simplejwt = "*"
 
 [tool.poetry.dev-dependencies]
 django-stubs = { version = "*", allow-prereleases = true }
