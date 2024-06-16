@@ -27,10 +27,6 @@ env = environ.Env(
     DJANGO_DEBUG=(bool, False),
     DOCKER_HOST_IP=(str, None),
     DJANGO_SECRET_KEY=str,
-    DJANGO_MEDIA_URL=(str, '/media/'),
-    DJANGO_MEDIA_ROOT=(str, os.path.join(BASE_DIR, 'media')),
-    DJANGO_STATIC_URL=(str, '/static/'),
-    DJANGO_STATIC_ROOT=(str, os.path.join(BASE_DIR, 'static')),
     DJANGO_ADDITIONAL_ALLOWED_HOSTS=(list, []),
     # Database
     DJANGO_DB_NAME=str,
@@ -126,6 +122,23 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
 }
 
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            os.path.join(BASE_DIR, "templates/"),
+        ],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'(^/api/.*$)|(^/media/.*$)'
@@ -186,7 +199,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+if DEBUG:
+    # Settings for local storage and local staticfiles
+    STATIC_URL = "/static/"
+    MEDIA_URL = "/media/"
+
+else:
+    STATIC_URL = "/staticfiles/"
+    MEDIA_URL = "/media/"
+
+#STATICFILES_DIRS = [os.path.join(BASE_DIR, 'task/static/'),]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
